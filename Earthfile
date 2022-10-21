@@ -3,7 +3,7 @@ IMPORT ./lib AS lib
 FROM DOCKERFILE .
 WORKDIR /workspace
 COPY aqua.yaml .
-RUN aqua i -l
+RUN aqua i
 ARG ci
 
 tf-init:
