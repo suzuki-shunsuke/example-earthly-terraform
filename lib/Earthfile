@@ -1,6 +1,5 @@
 VERSION 0.6
-FROM DOCKERFILE .
-WORKDIR /workspace
+FROM alpine:3.16.2
 ARG ci
 IF [ -z "$ci" ]
     ENV GITHUB_COMMENT_SKIP=true
