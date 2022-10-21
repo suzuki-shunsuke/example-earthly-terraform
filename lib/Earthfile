@@ -57,7 +57,14 @@ TF_PLAN:
     DO +VALIDATE_ARG_DIR -dir=$dir
     RUN terraform plan -input=false -out tfplan.binary
     RUN terraform show -json tfplan.binary >tfplan.json
+    SAVE ARTIFACT tfplan.binary
     SAVE ARTIFACT tfplan.json
+
+TF_APPLY:
+    COMMAND
+    ARG dir=.
+    DO +VALIDATE_ARG_DIR -dir=$dir
+    RUN terraform apply -input=false -auto-approve tfplan.binary
 
 CONFTEST:
     COMMAND

@@ -37,6 +37,16 @@ tf-plan:
     WORKDIR /workspace/$dir
     DO lib+TF_PLAN -dir=$dir 
 
+tf-apply:
+    ARG dir=.
+    DO lib+VALIDATE_ARG_DIR -dir $dir
+    COPY $dir $dir
+    COPY +tf-init/.terraform $dir/.terraform
+    COPY +tf-init/.terraform.lock.hcl $dir/.terraform.lock.hcl
+    COPY +tf-plan/tfplan.binary $dir/tfplan.binary
+    WORKDIR /workspace/$dir
+    DO lib+TF_APPLY -dir=$dir
+
 conftest:
     ARG dir=.
     DO lib+VALIDATE_ARG_DIR -dir $dir
