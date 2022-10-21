@@ -12,10 +12,10 @@ install-aqua:
 
 tf-init:
     COPY +install-aqua/aquaproj-aqua /
+    COPY foo foo
     WORKDIR /workspace/foo
-    COPY . .
     RUN terraform init -input=false
-    SAVE ARTIFACT .terraform AS LOCAL .terraform
+    SAVE ARTIFACT .terraform AS LOCAL foo/.terraform
 
 tf-validate:
     COPY +install-aqua/aquaproj-aqua /
