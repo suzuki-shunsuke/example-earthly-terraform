@@ -52,11 +52,11 @@ tfsec:
     FROM +validate-arg-dir -dir=$dir 
     COPY $dir $dir
     WORKDIR /workspace/$dir
-    RUN tfsec
+    DO lib+TFSEC -dir=$dir 
 
 tflint:
     ARG dir=.
     FROM +validate-arg-dir -dir=$dir 
     COPY $dir $dir
     WORKDIR /workspace/$dir
-    RUN tflint
+    DO lib+TFLINT -dir=$dir 

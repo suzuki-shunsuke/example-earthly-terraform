@@ -32,8 +32,8 @@ TF_INIT:
     COMMAND
     ARG dir=.
     ARG ci
-    DO +VALIDATE_ARG_DIR -dir=$dir 
-    DO +ENABLE_CI -ci=$ci 
+    DO +VALIDATE_ARG_DIR -dir=$dir
+    DO +ENABLE_CI -ci=$ci
     WORKDIR $dir
     RUN github-comment exec -- terraform init -input=false
     SAVE ARTIFACT .terraform AS LOCAL $dir/.terraform
@@ -42,19 +42,19 @@ TF_INIT:
 TF_VALIDATE:
     COMMAND
     ARG dir=.
-    DO +VALIDATE_ARG_DIR -dir=$dir 
+    DO +VALIDATE_ARG_DIR -dir=$dir
     RUN terraform validate
 
 TF_FMT:
     COMMAND
     ARG dir=.
-    DO +VALIDATE_ARG_DIR -dir=$dir 
+    DO +VALIDATE_ARG_DIR -dir=$dir
     RUN terraform fmt -check
 
 TF_PLAN:
     COMMAND
     ARG dir=.
-    DO +VALIDATE_ARG_DIR -dir=$dir 
+    DO +VALIDATE_ARG_DIR -dir=$dir
     RUN terraform plan -input=false -out tfplan.binary
     RUN terraform show -json tfplan.binary >tfplan.json
     SAVE ARTIFACT tfplan.json
@@ -62,6 +62,19 @@ TF_PLAN:
 CONFTEST:
     COMMAND
     ARG dir=.
-    DO +VALIDATE_ARG_DIR -dir=$dir 
+    DO +VALIDATE_ARG_DIR -dir=$dir
     RUN conftest -v
     RUN conftest test tfplan.json
+
+TFSEC:
+    COMMAND
+    ARG dir=.
+    DO +VALIDATE_ARG_DIR -dir=$dir
+    RUN tfsec
+
+TFLINT:
+    COMMAND
+    ARG dir=.
+    DO +VALIDATE_ARG_DIR -dir=$dir
+    RUN tflint --init
+    RUN tflint
