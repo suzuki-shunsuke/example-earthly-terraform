@@ -7,16 +7,27 @@ RUN apk add curl bash
 RUN curl -sSfL https://raw.githubusercontent.com/aquaproj/aqua-installer/v1.1.2/aqua-installer | bash
 RUN aqua i -l
 
+validate-arg-dir:
+    ARG dir
+    IF [ "$dir" = . ]
+        RUN echo "arg dir is required" >&2
+        RUN exit 1
+    END
+
 tf-init:
-    COPY foo foo
-    WORKDIR /workspace/foo
+    ARG dir=.
+    FROM +validate-arg-dir -dir=$dir 
+    COPY $dir $dir
+    WORKDIR /workspace/$dir
     RUN terraform init -input=false
-    SAVE ARTIFACT .terraform AS LOCAL foo/.terraform
-    SAVE ARTIFACT .terraform.lock.hcl AS LOCAL foo/.terraform.lock.hcl
+    SAVE ARTIFACT .terraform AS LOCAL $dir/.terraform
+    SAVE ARTIFACT .terraform.lock.hcl AS LOCAL $dir/.terraform.lock.hcl
 
 tf-validate:
-    COPY foo foo
-    COPY +tf-init/.terraform foo/.terraform
-    COPY +tf-init/.terraform.lock.hcl foo/.terraform.lock.hcl
-    WORKDIR /workspace/foo
+    ARG dir=.
+    FROM +validate-arg-dir -dir=$dir 
+    COPY $dir $dir
+    COPY +tf-init/.terraform $dir/.terraform
+    COPY +tf-init/.terraform.lock.hcl $dir/.terraform.lock.hcl
+    WORKDIR /workspace/$dir
     RUN terraform validate
