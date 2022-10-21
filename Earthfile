@@ -47,7 +47,17 @@ tf-plan:
     COPY +tf-init/.terraform $dir/.terraform
     COPY +tf-init/.terraform.lock.hcl $dir/.terraform.lock.hcl
     WORKDIR /workspace/$dir
-    RUN terraform plan -input=false
+    RUN terraform plan -input=false -out tfplan.binary
+    RUN terraform show -json tfplan.binary >tfplan.json
+    SAVE ARTIFACT tfplan.json
+
+conftest:
+    ARG dir=.
+    FROM +validate-arg-dir -dir=$dir 
+    COPY policy policy
+    COPY +tf-plan/tfplan.json .
+    RUN conftest -v
+    RUN conftest test tfplan.json
 
 tfsec:
     ARG dir=.
