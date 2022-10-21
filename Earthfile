@@ -1,10 +1,7 @@
 VERSION 0.6
-FROM alpine:3.16.2
+FROM DOCKERFILE .
 WORKDIR /workspace
-ENV PATH=/root/.local/share/aquaproj-aqua/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 COPY aqua.yaml .
-RUN apk add curl bash
-RUN curl -sSfL https://raw.githubusercontent.com/aquaproj/aqua-installer/v1.1.2/aqua-installer | bash
 RUN aqua i -l
 ARG ci
 IF [ -z "$ci" ]
@@ -35,6 +32,22 @@ tf-validate:
     COPY +tf-init/.terraform.lock.hcl $dir/.terraform.lock.hcl
     WORKDIR /workspace/$dir
     RUN terraform validate
+
+tf-fmt:
+    ARG dir=.
+    FROM +validate-arg-dir -dir=$dir 
+    COPY $dir $dir
+    WORKDIR /workspace/$dir
+    RUN terraform fmt -check
+
+tf-plan:
+    ARG dir=.
+    FROM +validate-arg-dir -dir=$dir 
+    COPY $dir $dir
+    COPY +tf-init/.terraform $dir/.terraform
+    COPY +tf-init/.terraform.lock.hcl $dir/.terraform.lock.hcl
+    WORKDIR /workspace/$dir
+    RUN terraform plan -input=false
 
 tfsec:
     ARG dir=.
