@@ -16,5 +16,8 @@ jobs:
       - uses: aquaproj/aqua-installer@c553e04154f1f3b7e5eb35da058db3bb782bee8a # tag=v1.1.2
         with:
           aqua_version: v1.21.0
+      # Earthly requires BuildKit
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
       - name: Run build
         run: earthly --ci --push +tf-validate
