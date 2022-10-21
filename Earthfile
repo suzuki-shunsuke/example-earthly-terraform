@@ -1,44 +1,35 @@
 VERSION 0.6
+IMPORT ./lib AS lib
 FROM DOCKERFILE .
 WORKDIR /workspace
 COPY aqua.yaml .
 RUN aqua i -l
 ARG ci
-IF [ -z "$ci" ]
-    ENV GITHUB_COMMENT_SKIP=true
-END
 
 validate-arg-dir:
-    ARG dir
-    IF [ "$dir" = . ]
-        RUN echo "arg dir is required" >&2
-        RUN exit 1
-    END
+    ARG dir=.
+    DO lib+VALIDATE_ARG_DIR -dir $dir
 
 tf-init:
     ARG dir=.
-    FROM +validate-arg-dir -dir=$dir 
     COPY $dir $dir
-    WORKDIR /workspace/$dir
-    RUN github-comment exec -- terraform init -input=false
-    SAVE ARTIFACT .terraform AS LOCAL $dir/.terraform
-    SAVE ARTIFACT .terraform.lock.hcl AS LOCAL $dir/.terraform.lock.hcl
+    DO lib+TF_INIT -dir=$dir 
 
 tf-validate:
     ARG dir=.
-    FROM +validate-arg-dir -dir=$dir 
+    DO lib+VALIDATE_ARG_DIR -dir $dir
     COPY $dir $dir
     COPY +tf-init/.terraform $dir/.terraform
     COPY +tf-init/.terraform.lock.hcl $dir/.terraform.lock.hcl
     WORKDIR /workspace/$dir
-    RUN terraform validate
+    DO lib+TF_VALIDATE -dir=$dir 
 
 tf-fmt:
     ARG dir=.
     FROM +validate-arg-dir -dir=$dir 
     COPY $dir $dir
     WORKDIR /workspace/$dir
-    RUN terraform fmt -check
+    DO lib+TF_FMT -dir=$dir 
 
 tf-plan:
     ARG dir=.
@@ -47,17 +38,14 @@ tf-plan:
     COPY +tf-init/.terraform $dir/.terraform
     COPY +tf-init/.terraform.lock.hcl $dir/.terraform.lock.hcl
     WORKDIR /workspace/$dir
-    RUN terraform plan -input=false -out tfplan.binary
-    RUN terraform show -json tfplan.binary >tfplan.json
-    SAVE ARTIFACT tfplan.json
+    DO lib+TF_PLAN -dir=$dir 
 
 conftest:
     ARG dir=.
     FROM +validate-arg-dir -dir=$dir 
     COPY policy policy
     COPY +tf-plan/tfplan.json .
-    RUN conftest -v
-    RUN conftest test tfplan.json
+    DO lib+CONFTEST -dir=$dir 
 
 tfsec:
     ARG dir=.

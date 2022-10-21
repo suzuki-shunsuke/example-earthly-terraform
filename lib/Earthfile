@@ -1,0 +1,67 @@
+VERSION 0.6
+FROM DOCKERFILE .
+WORKDIR /workspace
+ARG ci
+IF [ -z "$ci" ]
+    ENV GITHUB_COMMENT_SKIP=true
+END
+
+validate-arg-dir:
+    ARG dir
+    IF [ "$dir" = . ]
+        RUN echo "arg dir is required" >&2
+        RUN exit 1
+    END
+
+ENABLE_CI:
+    COMMAND
+    ARG ci
+    IF [ -z "$ci" ]
+        ENV GITHUB_COMMENT_SKIP=true
+    END
+
+VALIDATE_ARG_DIR:
+    COMMAND
+    ARG dir
+    IF [ "$dir" = . ]
+        RUN echo "arg dir is required" >&2
+        RUN exit 1
+    END
+
+TF_INIT:
+    COMMAND
+    ARG dir=.
+    ARG ci
+    DO +VALIDATE_ARG_DIR -dir=$dir 
+    DO +ENABLE_CI -ci=$ci 
+    WORKDIR $dir
+    RUN github-comment exec -- terraform init -input=false
+    SAVE ARTIFACT .terraform AS LOCAL $dir/.terraform
+    SAVE ARTIFACT .terraform.lock.hcl AS LOCAL $dir/.terraform.lock.hcl
+
+TF_VALIDATE:
+    COMMAND
+    ARG dir=.
+    DO +VALIDATE_ARG_DIR -dir=$dir 
+    RUN terraform validate
+
+TF_FMT:
+    COMMAND
+    ARG dir=.
+    DO +VALIDATE_ARG_DIR -dir=$dir 
+    RUN terraform fmt -check
+
+TF_PLAN:
+    COMMAND
+    ARG dir=.
+    DO +VALIDATE_ARG_DIR -dir=$dir 
+    RUN terraform plan -input=false -out tfplan.binary
+    RUN terraform show -json tfplan.binary >tfplan.json
+    SAVE ARTIFACT tfplan.json
+
+CONFTEST:
+    COMMAND
+    ARG dir=.
+    DO +VALIDATE_ARG_DIR -dir=$dir 
+    RUN conftest -v
+    RUN conftest test tfplan.json
