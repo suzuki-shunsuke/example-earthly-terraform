@@ -6,6 +6,10 @@ COPY aqua.yaml .
 RUN apk add curl bash
 RUN curl -sSfL https://raw.githubusercontent.com/aquaproj/aqua-installer/v1.1.2/aqua-installer | bash
 RUN aqua i -l
+ARG ci
+IF [ -z "$ci" ]
+    ENV GITHUB_COMMENT_SKIP=true
+END
 
 validate-arg-dir:
     ARG dir
@@ -19,7 +23,7 @@ tf-init:
     FROM +validate-arg-dir -dir=$dir 
     COPY $dir $dir
     WORKDIR /workspace/$dir
-    RUN terraform init -input=false
+    RUN github-comment exec -- terraform init -input=false
     SAVE ARTIFACT .terraform AS LOCAL $dir/.terraform
     SAVE ARTIFACT .terraform.lock.hcl AS LOCAL $dir/.terraform.lock.hcl
 
@@ -31,3 +35,17 @@ tf-validate:
     COPY +tf-init/.terraform.lock.hcl $dir/.terraform.lock.hcl
     WORKDIR /workspace/$dir
     RUN terraform validate
+
+tfsec:
+    ARG dir=.
+    FROM +validate-arg-dir -dir=$dir 
+    COPY $dir $dir
+    WORKDIR /workspace/$dir
+    RUN tfsec
+
+tflint:
+    ARG dir=.
+    FROM +validate-arg-dir -dir=$dir 
+    COPY $dir $dir
+    WORKDIR /workspace/$dir
+    RUN tflint
