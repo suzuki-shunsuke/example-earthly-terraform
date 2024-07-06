@@ -15,4 +15,4 @@ packages:
 - name: aquasecurity/tfsec@v1.28.0
 - name: terraform-linters/tflint@v0.41.0
 - name: terraform-docs/terraform-docs@v0.16.0
-- name: open-policy-agent/conftest@v0.35.0
+- name: open-policy-agent/conftest@v0.54.0
