@@ -10,7 +10,7 @@ registries:
   ref: v3.79.0 # renovate: depName=aquaproj/aqua-registry
 packages:
 - name: hashicorp/terraform@v1.3.3
-- name: earthly/earthly@v0.6.27
+- name: earthly/earthly@v0.8.15
 - name: suzuki-shunsuke/github-comment@v5.0.0
 - name: aquasecurity/tfsec@v1.28.0
 - name: terraform-linters/tflint@v0.41.0
